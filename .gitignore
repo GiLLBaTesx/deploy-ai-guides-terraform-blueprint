@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# History files
+.history/
+
+# Terraform
+blueprint/terraform/.terraform/
+blueprint/terraform/.terraform.lock.hcl
+blueprint/terraform/terraform.tfstate
+blueprint/terraform/terraform.tfstate.backup
+blueprint/terraform/.env
+blueprint/terraform/terraform.tfvars
+
+# Credentials and sensitive files
+*.tfvars
+!*.tfvars.example
+.env
+!.env.example
