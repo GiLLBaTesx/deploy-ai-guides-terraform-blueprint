@@ -16,6 +16,8 @@ An organization wants to deploy AI Guides programmatically to:
 
 This blueprint uses the "Check Account Balance" use case - a recommended single-intent guide from AI Guides best practices.
 
+![Use Case Flow](images/use-case-flow.png "Check Account Balance conversational flow showing customer interaction, API call, error handling, and agent transfer")
+
 ## Solution
 
 This blueprint demonstrates how to:
@@ -67,10 +69,10 @@ This blueprint demonstrates how to:
 
 ### Clone the repository
 
-Clone the [deploy-ai-guides-terraform-blueprint](https://github.com/GenesysCloudBlueprints/deploy-ai-guides-terraform-blueprint) repository from GitHub:
+Clone the [deploy-ai-guides-terraform-blueprint](https://github.com/GiLLBaTesx/deploy-ai-guides-terraform-blueprint) repository from GitHub:
 
 ```bash
-git clone https://github.com/GenesysCloudBlueprints/deploy-ai-guides-terraform-blueprint.git
+git clone https://github.com/GiLLBaTesx/deploy-ai-guides-terraform-blueprint.git
 cd deploy-ai-guides-terraform-blueprint
 ```
 
@@ -113,7 +115,7 @@ cp .env.example .env
 # Genesys Cloud Provider Environment Variables
 GENESYSCLOUD_OAUTHCLIENT_ID=your-client-id
 GENESYSCLOUD_OAUTHCLIENT_SECRET=your-client-secret
-GENESYSCLOUD_REGION=dca  # or your region (us-east-1, eu-west-1, etc.)
+GENESYSCLOUD_REGION=your-region-here  # e.g., us-east-1, eu-west-1, ap-southeast-2
 
 # Terraform Variables for Resources
 TF_VAR_integration_id=your-integration-id

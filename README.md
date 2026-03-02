@@ -6,11 +6,15 @@ This Genesys Cloud Developer Blueprint demonstrates how to deploy AI Guides usin
 
 ![Deployment Workflow](blueprint/images/deployment-workflow.png "AI Guides Terraform deployment workflow")
 
+## Use Case Flow
+
+![Use Case Flow](blueprint/images/use-case-flow.png "Check Account Balance conversational flow")
+
 ## Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/GenesysCloudBlueprints/deploy-ai-guides-terraform-blueprint.git
+git clone https://github.com/GiLLBaTesx/deploy-ai-guides-terraform-blueprint.git
 cd deploy-ai-guides-terraform-blueprint/blueprint/terraform
 
 # Configure environment variables
