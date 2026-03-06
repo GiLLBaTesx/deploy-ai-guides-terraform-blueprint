@@ -20,3 +20,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "region" {
+  description = "Genesys Cloud region code (e.g., use1, usw2, euw1)"
+  type        = string
+  default     = "use1"
+}
