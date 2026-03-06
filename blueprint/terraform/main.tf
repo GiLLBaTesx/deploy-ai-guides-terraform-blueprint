@@ -1,10 +1,10 @@
 # Terraform configuration for Genesys Cloud AI Guides
-# This example demonstrates deploying an AI Guide using CX as Code
+# This example demonstrates deploying a complete AI Guide solution using modular architecture
 
 terraform {
   required_providers {
     genesyscloud = {
-      source  = "mypurecloud/genesyscloud"
+      source = "mypurecloud/genesyscloud"
     }
   }
 }
@@ -16,110 +16,123 @@ terraform {
 provider "genesyscloud" {
 }
 
-# Create an AI Guide container
-resource "genesyscloud_guide" "account_balance_guide" {
-  name = "Check Account Balance"
+# AI Guide Module
+# Creates the AI Guide with version and data action
+module "ai_guide" {
+  source = "./modules/ai_guide"
+
+  guide_name                  = "Check Account Balance"
+  guide_instruction_file      = "account-balance-guide.md"
+  input_variable_name         = "account_number"
+  input_variable_description  = "Customer's account number"
+  output_variable_name        = "current_balance"
+  output_variable_description = "Current account balance"
+  data_action_name            = "Get Account Balance"
+  data_action_label           = "Get Account Balance"
+  data_action_description     = "Retrieves customer account balance from backend system"
+  integration_id              = var.integration_id
+  api_base_url                = var.api_base_url
 }
 
-# Create a version of the guide with instructions and variables
-resource "genesyscloud_guide_version" "account_balance_v1" {
-  guide_id    = genesyscloud_guide.account_balance_guide.id
-  instruction = file("${path.module}/guides/account-balance-guide.md")
+# Bot Flow Module
+# Creates a bot flow that calls the AI Guide
+module "bot_flow" {
+  source = "./modules/bot_flow"
 
-  # Input variable from bot flow
-  variables {
-    name        = "account_number"
-    type        = "String"
-    scope       = "Input"
-    description = "Customer's account number"
-  }
+  guide_id             = module.ai_guide.guide_id
+  guide_name           = module.ai_guide.guide_name
+  input_variable_name  = "account_number"
+  output_variable_name = "current_balance"
 
-  # Output variable to pass back to flow
-  variables {
-    name        = "current_balance"
-    type        = "String"
-    scope       = "Output"
-    description = "Current account balance"
-  }
-
-  # Reference to data action
-  resources {
-    data_action {
-      data_action_id = genesyscloud_integration_action.get_account_balance.id
-      label          = "Get Account Balance"
-      description    = "Retrieves customer account balance from backend system"
-    }
-  }
+  depends_on = [module.ai_guide]
 }
 
-# Data action for retrieving account balance
-resource "genesyscloud_integration_action" "get_account_balance" {
-  name           = "Get Account Balance"
-  category       = "Account Management"
-  integration_id = var.integration_id
+# Inbound Message Flow Module
+# Creates an inbound message flow that routes to the bot flow
+module "inbound_message_flow" {
+  source = "./modules/inbound_message_flow"
 
-  contract_input = jsonencode({
-    type = "object"
-    properties = {
-      accountNumber = {
-        type        = "string"
-        description = "The account number to look up"
-      }
-    }
-    required = ["accountNumber"]
-  })
+  bot_flow_id   = module.bot_flow.bot_flow_id
+  bot_flow_name = module.bot_flow.bot_flow_name
 
-  contract_output = jsonencode({
-    type = "object"
-    properties = {
-      balance = {
-        type        = "string"
-        description = "Current account balance"
-      }
-      currency = {
-        type        = "string"
-        description = "Currency code (e.g., USD)"
-      }
-      lastUpdated = {
-        type        = "string"
-        description = "Last update timestamp"
-      }
-    }
-  })
+  depends_on = [module.bot_flow]
+}
 
-  config_request {
-    request_url_template = "${var.api_base_url}/accounts/$${input.accountNumber}/balance"
-    request_type         = "GET"
-    request_template     = "$${input.rawRequest}"
-  }
+# Messaging Configuration Module
+# Creates web messaging configuration and deployment
+module "messaging_config" {
+  source = "./modules/messaging_config"
 
-  config_response {
-    translation_map = {
-      balance     = "$.balance.amount"
-      currency    = "$.balance.currency"
-      lastUpdated = "$.lastUpdated"
-    }
-    success_template = "$${rawResult}"
-  }
+  config_name             = "Account Balance Web Messaging - ${var.environment}"
+  deployment_name         = "Account Balance Deployment - ${var.environment}"
+  inbound_message_flow_id = module.inbound_message_flow.flow_id
+  region                  = var.region
+
+  depends_on = [module.inbound_message_flow]
 }
 
 # Outputs
 output "guide_id" {
-  value       = genesyscloud_guide.account_balance_guide.id
+  value       = module.ai_guide.guide_id
   description = "The ID of the created AI Guide"
 }
 
 output "guide_name" {
-  value       = genesyscloud_guide.account_balance_guide.name
+  value       = module.ai_guide.guide_name
   description = "The name of the AI Guide"
 }
 
 output "guide_version_id" {
-  value       = genesyscloud_guide_version.account_balance_v1.id
+  value       = module.ai_guide.guide_version_id
   description = "The ID of the guide version"
 }
 
 output "data_action_id" {
-  value       = genesyscloud_integration_action.get_account_balance.id
+  value       = module.ai_guide.data_action_id
   description = "The ID of the account balance data action"
+}
+
+output "bot_flow_id" {
+  value       = module.bot_flow.bot_flow_id
+  description = "The ID of the bot flow"
+}
+
+output "inbound_message_flow_id" {
+  value       = module.inbound_message_flow.flow_id
+  description = "The ID of the inbound message flow"
+}
+
+output "messaging_deployment_id" {
+  value       = module.messaging_config.deployment_id
+  description = "The ID of the web messaging deployment"
+}
+
+output "deployment_instructions" {
+  value       = <<-EOT
+    ========================================
+    Deployment Complete!
+    ========================================
+    
+    AI Guide: ${module.ai_guide.guide_name}
+    Guide ID: ${module.ai_guide.guide_id}
+    
+    Bot Flow ID: ${module.bot_flow.bot_flow_id}
+    Inbound Message Flow ID: ${module.inbound_message_flow.flow_id}
+    
+    Web Messaging Deployment ID: ${module.messaging_config.deployment_id}
+    
+    To get the deployment snippet:
+    1. Go to Admin > Message > Messenger Deployments
+    2. Find deployment: ${module.messaging_config.deployment_id}
+    3. Copy the deployment snippet
+    4. Add it to your website's HTML
+    
+    To test the solution:
+    1. Open your website with the messenger snippet
+    2. Click the messenger button
+    3. Type an account number to test the bot
+    
+    ========================================
+  EOT
+  description = "Instructions for using the deployed solution"
 }

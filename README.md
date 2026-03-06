@@ -32,10 +32,15 @@ terraform apply
 
 ## What Gets Deployed
 
-This blueprint deploys:
+This blueprint deploys a complete AI Guide solution with 7 resources:
+
 1. **AI Guide Container** - "Check Account Balance" guide
 2. **Guide Version** - Complete guide with instructions, variables, and data action references
 3. **Data Action** - Integration action for retrieving account balance from backend API
+4. **Bot Flow** - Conversation flow that calls the AI Guide
+5. **Inbound Message Flow** - Routes incoming messages to the bot flow
+6. **Web Messaging Configuration** - Configures the web messenger interface
+7. **Web Messaging Deployment** - Deploys the messenger to your website
 
 ## Use Case
 
