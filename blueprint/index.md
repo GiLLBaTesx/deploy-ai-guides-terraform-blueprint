@@ -135,10 +135,10 @@ cp .env.example .env
 
 3. Edit `.env` and add your credentials:
 ```bash
-# Genesys Cloud Provider Environment Variables
-GENESYSCLOUD_OAUTHCLIENT_ID=your-client-id
-GENESYSCLOUD_OAUTHCLIENT_SECRET=your-client-secret
-GENESYSCLOUD_REGION=your-region-here  # e.g., us-east-1, eu-west-1, ap-southeast-2
+# Genesys Cloud Provider Credentials (using Terraform variables)
+TF_VAR_genesyscloud_oauthclient_id=your-client-id
+TF_VAR_genesyscloud_oauthclient_secret=your-client-secret
+TF_VAR_genesyscloud_region=your-region-here  # e.g., us-east-1, eu-west-1, ap-southeast-2
 
 # Terraform Variables for Resources
 TF_VAR_integration_id=your-integration-id
@@ -546,12 +546,12 @@ Never hardcode credentials in Terraform files:
 
 ```bash
 # .env file (never commit this)
-export GENESYSCLOUD_OAUTHCLIENT_ID="your-client-id"
-export GENESYSCLOUD_OAUTHCLIENT_SECRET="your-client-secret"
-export GENESYSCLOUD_REGION="us-east-1"
+export TF_VAR_genesyscloud_oauthclient_id="your-client-id"
+export TF_VAR_genesyscloud_oauthclient_secret="your-client-secret"
+export TF_VAR_genesyscloud_region="us-east-1"
 ```
 
-The Genesys Cloud provider automatically reads these environment variables.
+The Genesys Cloud provider will use these Terraform variables.
 
 ### 4. Implement modular architecture
 
@@ -660,10 +660,10 @@ module "bot_flow" {
 Create a `.env` file (add to `.gitignore`):
 
 ```bash
-# Genesys Cloud Provider Environment Variables
-export GENESYSCLOUD_OAUTHCLIENT_ID="your-client-id"
-export GENESYSCLOUD_OAUTHCLIENT_SECRET="your-client-secret"
-export GENESYSCLOUD_REGION="us-east-1"
+# Genesys Cloud Provider Credentials (using Terraform variables)
+export TF_VAR_genesyscloud_oauthclient_id="your-client-id"
+export TF_VAR_genesyscloud_oauthclient_secret="your-client-secret"
+export TF_VAR_genesyscloud_region="us-east-1"
 
 # Terraform Variables for Resources
 export TF_VAR_integration_id="your-integration-id"

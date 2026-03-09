@@ -1,9 +1,24 @@
 # Variables for Genesys Cloud Terraform configuration
-# Note: OAuth credentials are set via environment variables:
-# - GENESYSCLOUD_OAUTHCLIENT_ID
-# - GENESYSCLOUD_OAUTHCLIENT_SECRET
-# - GENESYSCLOUD_REGION
 
+# Provider credentials
+variable "genesyscloud_oauthclient_id" {
+  description = "Genesys Cloud OAuth Client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "genesyscloud_oauthclient_secret" {
+  description = "Genesys Cloud OAuth Client Secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "genesyscloud_region" {
+  description = "Genesys Cloud region (e.g., us-east-1, eu-west-1, ap-southeast-2)"
+  type        = string
+}
+
+# Resource configuration variables
 variable "integration_id" {
   description = "Integration ID for data actions"
   type        = string
