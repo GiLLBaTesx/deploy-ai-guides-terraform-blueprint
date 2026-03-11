@@ -1,0 +1,64 @@
+inboundMessage:
+  name: Account Balance Inbound Message Flow
+  division: Home
+  startUpRef: "/inboundMessage/states/state[Initial State_10]"
+  defaultLanguage: en-us
+  supportedLanguages:
+    en-us:
+      defaultLanguageSkill:
+        noValue: true
+  settingsErrorHandling:
+    errorHandling:
+      disconnect:
+        none: true
+  states:
+    state[Initial State_10]:
+      name: Initial State
+      refId: Initial State_10
+      actions:
+        - sendResponse:
+            name: Welcome Message
+            messageBody:
+              text: "Hello! I'm here to help you check your account balance. Please provide your account number."
+        - collectInput:
+            name: Collect Account Number
+            timeout:
+              lit:
+                seconds: 60
+            noEntryTimeout:
+              lit:
+                seconds: 30
+            outputs:
+              - var: Flow.accountNumber
+        - callBotFlow:
+            name: Call Bot Flow
+            botFlow:
+              id: ${bot_flow_id}
+              name: ${bot_flow_name}
+            botFlowInputs:
+              - name: accountNumber
+                value:
+                  exp: "Flow.accountNumber"
+            botFlowOutputs:
+              - name: balance
+                var: Flow.balance
+        - decision:
+            name: Check If Balance Retrieved
+            condition:
+              exp: "IsSet(Flow.balance)"
+            yes:
+              actions:
+                - sendResponse:
+                    name: Send Balance
+                    messageBody:
+                      text: "Your current account balance is {{Flow.balance}}. Is there anything else I can help you with?"
+                - disconnect:
+                    name: End Conversation
+            no:
+              actions:
+                - sendResponse:
+                    name: Error Response
+                    messageBody:
+                      text: "I'm sorry, I couldn't retrieve your account balance. Please try again later or contact customer support."
+                - disconnect:
+                    name: End Conversation

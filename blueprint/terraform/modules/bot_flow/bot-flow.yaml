@@ -1,0 +1,54 @@
+inboundCall:
+  name: Account Balance Bot Flow
+  division: Home
+  startUpRef: "/inboundCall/states/state[Initial State_10]"
+  defaultLanguage: en-us
+  supportedLanguages:
+    en-us:
+      defaultLanguageSkill:
+        noValue: true
+  settingsErrorHandling:
+    errorHandling:
+      disconnect:
+        none: true
+  states:
+    state[Initial State_10]:
+      name: Initial State
+      refId: Initial State_10
+      actions:
+        - playAudio:
+            name: Play Audio
+            audio:
+              tts: "Hello! Welcome to our account balance service."
+        - callGuide:
+            name: Call Account Balance Guide
+            guide:
+              id: ${guide_id}
+              name: ${guide_name}
+            inputs:
+              - name: ${input_variable_name}
+                value:
+                  exp: "Flow.accountNumber"
+            outputs:
+              - name: ${output_variable_name}
+                var: Flow.balance
+        - decision:
+            name: Check Balance Retrieved
+            condition:
+              exp: "IsSet(Flow.balance)"
+            yes:
+              actions:
+                - playAudio:
+                    name: Provide Balance
+                    audio:
+                      tts: "Your current balance is {{Flow.balance}}"
+                - disconnect:
+                    name: Disconnect
+            no:
+              actions:
+                - playAudio:
+                    name: Error Message
+                    audio:
+                      tts: "I'm sorry, I couldn't retrieve your balance. Please try again later or contact customer service."
+                - disconnect:
+                    name: Disconnect

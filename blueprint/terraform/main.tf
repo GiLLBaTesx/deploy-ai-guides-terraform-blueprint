@@ -1,125 +1,54 @@
-# Terraform configuration for Genesys Cloud AI Guides
-# This example demonstrates deploying an AI Guide using CX as Code
+# AI Guide Module
+# Creates the AI Guide with version and data action
+module "ai_guide" {
+  source = "./modules/ai_guide"
 
-terraform {
-  required_providers {
-    genesyscloud = {
-      source  = "mypurecloud/genesyscloud"
-    }
-  }
+  guide_name                  = "Check Account Balance"
+  guide_instruction_file      = "account-balance-guide.md"
+  input_variable_name         = "account_number"
+  input_variable_description  = "Customer's account number"
+  output_variable_name        = "current_balance"
+  output_variable_description = "Current account balance"
+  data_action_name            = "Get Account Balance"
+  data_action_label           = "Get Account Balance"
+  data_action_description     = "Retrieves customer account balance from backend system"
+  integration_id              = var.integration_id
+  api_base_url                = var.api_base_url
 }
 
-# Provider will use environment variables:
-# GENESYSCLOUD_OAUTHCLIENT_ID
-# GENESYSCLOUD_OAUTHCLIENT_SECRET  
-# GENESYSCLOUD_REGION
-provider "genesyscloud" {
+# Bot Flow Module
+# Creates a bot flow that calls the AI Guide
+module "bot_flow" {
+  source = "./modules/bot_flow"
+
+  guide_id             = module.ai_guide.guide_id
+  guide_name           = module.ai_guide.guide_name
+  input_variable_name  = "account_number"
+  output_variable_name = "current_balance"
+
+  depends_on = [module.ai_guide]
 }
 
-# Create an AI Guide container
-resource "genesyscloud_guide" "account_balance_guide" {
-  name = "Check Account Balance"
+# Inbound Message Flow Module
+# Creates an inbound message flow that routes to the bot flow
+module "inbound_message_flow" {
+  source = "./modules/inbound_message_flow"
+
+  bot_flow_id   = module.bot_flow.bot_flow_id
+  bot_flow_name = module.bot_flow.bot_flow_name
+
+  depends_on = [module.bot_flow]
 }
 
-# Create a version of the guide with instructions and variables
-resource "genesyscloud_guide_version" "account_balance_v1" {
-  guide_id    = genesyscloud_guide.account_balance_guide.id
-  instruction = file("${path.module}/guides/account-balance-guide.md")
+# Messaging Configuration Module
+# Creates web messaging configuration and deployment
+module "messaging_config" {
+  source = "./modules/messaging_config"
 
-  # Input variable from bot flow
-  variables {
-    name        = "account_number"
-    type        = "String"
-    scope       = "Input"
-    description = "Customer's account number"
-  }
+  config_name             = "Account Balance Web Messaging - ${var.environment}"
+  deployment_name         = "Account Balance Deployment - ${var.environment}"
+  inbound_message_flow_id = module.inbound_message_flow.flow_id
+  region                  = var.region
 
-  # Output variable to pass back to flow
-  variables {
-    name        = "current_balance"
-    type        = "String"
-    scope       = "Output"
-    description = "Current account balance"
-  }
-
-  # Reference to data action
-  resources {
-    data_action {
-      data_action_id = genesyscloud_integration_action.get_account_balance.id
-      label          = "Get Account Balance"
-      description    = "Retrieves customer account balance from backend system"
-    }
-  }
-}
-
-# Data action for retrieving account balance
-resource "genesyscloud_integration_action" "get_account_balance" {
-  name           = "Get Account Balance"
-  category       = "Account Management"
-  integration_id = var.integration_id
-
-  contract_input = jsonencode({
-    type = "object"
-    properties = {
-      accountNumber = {
-        type        = "string"
-        description = "The account number to look up"
-      }
-    }
-    required = ["accountNumber"]
-  })
-
-  contract_output = jsonencode({
-    type = "object"
-    properties = {
-      balance = {
-        type        = "string"
-        description = "Current account balance"
-      }
-      currency = {
-        type        = "string"
-        description = "Currency code (e.g., USD)"
-      }
-      lastUpdated = {
-        type        = "string"
-        description = "Last update timestamp"
-      }
-    }
-  })
-
-  config_request {
-    request_url_template = "${var.api_base_url}/accounts/$${input.accountNumber}/balance"
-    request_type         = "GET"
-    request_template     = "$${input.rawRequest}"
-  }
-
-  config_response {
-    translation_map = {
-      balance     = "$.balance.amount"
-      currency    = "$.balance.currency"
-      lastUpdated = "$.lastUpdated"
-    }
-    success_template = "$${rawResult}"
-  }
-}
-
-# Outputs
-output "guide_id" {
-  value       = genesyscloud_guide.account_balance_guide.id
-  description = "The ID of the created AI Guide"
-}
-
-output "guide_name" {
-  value       = genesyscloud_guide.account_balance_guide.name
-  description = "The name of the AI Guide"
-}
-
-output "guide_version_id" {
-  value       = genesyscloud_guide_version.account_balance_v1.id
-  description = "The ID of the guide version"
-}
-
-output "data_action_id" {
-  value       = genesyscloud_integration_action.get_account_balance.id
-  description = "The ID of the account balance data action"
+  depends_on = [module.inbound_message_flow]
 }
